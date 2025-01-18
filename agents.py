@@ -31,7 +31,7 @@ class QLearningAgent:
         self.episodes = episodes
         self.current_episode = 0  # Track current episode
 
-        # Precompute decay rate for exponential decay
+        # Get decay rate for exponential decay
         if epsilon_decay == "exponential":
             self.decay_rate = (epsilon_min / epsilon) ** (1 / episodes)
 
@@ -134,7 +134,7 @@ class DynaQAgent(QLearningAgent):
         episodes=500,
         prioritised_sweeping=False,
         priority_threshold=0.1,
-        forgetting_threshold=1000,  # Forget transitions older than this many updates,
+        forgetting_threshold=1000,  # Forget transitions older than this many updates
     ):
         """A tabular Dyna-Q agent with optional prioritised sweeping."""
         super().__init__(
@@ -309,8 +309,6 @@ class DynaQPlusAgent(QLearningAgent):
             # Add novelty bonus based on time since last visit
             time_since_last_visit = self.current_step - last_visit
             novelty_bonus = self.novelty_bonus_weight * np.sqrt(time_since_last_visit)
-
-            # Adjusted reward with novelty bonus
             adjusted_reward = sampled_reward + novelty_bonus
 
             # Perform Q-learning update for the simulated transition

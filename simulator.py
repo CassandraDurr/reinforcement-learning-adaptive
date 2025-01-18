@@ -29,7 +29,7 @@ class Simulator:
         self.policy_entropies = []
         self.policy_changes = []
 
-        #  If we want to store Q-tables for each episode:
+        #  Store Q-tables for each episode
         self.store_heatmaps = store_heatmaps
         self.episode_action_values = (
             []
@@ -50,7 +50,7 @@ class Simulator:
             exp_q_values = np.exp(q_values)  # Exponentiate Q-values
             probabilities = exp_q_values / np.sum(
                 exp_q_values
-            )  # Normalize to probabilities
+            )  # Normalise to probabilities
             entropy = -np.sum(
                 probabilities * np.log(probabilities + 1e-10)
             )  # Compute entropy
@@ -183,9 +183,9 @@ class Simulator:
             if "remove_small_reward_blocks" in changes:
                 small_rewards.difference_update(changes["remove_small_reward_blocks"])
 
-        # Extract the action values (Q or mu) for the given episode
+        # Extract the action values (Q) for the given episode
         action_values = self.episode_action_values[episode]
-        policy = np.argmax(action_values, axis=1)  # Best action per state
+        policy = np.argmax(action_values, axis=1)  # Greedy action per state
 
         grid_size = self.env.size
         actions = ["↑", "↓", "←", "→"]
@@ -631,14 +631,13 @@ class Simulator:
         grid_size = self.env.size
         num_episodes = len(self.episode_action_values)  # how many snapshots
 
-        # -- We'll create 4 subplots for each action if action_size=4 --
+        # -- 4 subplots for each action if action_size=4 --
         fig, axes = plt.subplots(2, 2, figsize=(10, 9))
         fig.suptitle("Action-Value Heatmaps Over Time")
 
-        # We'll store a list of Image objects (one per action) so we can update them
         ims = []
         for i in range(self.agent.action_size):
-            # Initialise empty heatmap (the data here is just placeholders)
+            # Initialise empty heatmap
             heatmap_data = np.zeros(grid_size)
             ax = axes[i // 2, i % 2]
             im = ax.imshow(
@@ -647,9 +646,6 @@ class Simulator:
             ax.set_title(f"Action {actions[i]}")
             fig.colorbar(im, ax=ax)
             ims.append(im)
-
-        # Optionally store lava/goal rectangles if you want them static
-        # for all frames; or re-draw them each frame if they change over time.
 
         # -- Define init function --
         def init():

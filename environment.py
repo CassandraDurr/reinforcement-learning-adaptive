@@ -9,7 +9,7 @@ class AdaptiveGridWorld:
         lava_pools: list[tuple[int, int]] | None = None,
         changes: dict[int, dict] | None = None,
         small_reward_blocks: list[tuple[int, int]] | None = None,
-        small_reward_value: float = 5.0,  # Default reward for small blocks
+        small_reward_value: float = 5.0,
     ):
         """
         An adaptive GridWorld.
@@ -57,6 +57,7 @@ class AdaptiveGridWorld:
         self.small_reward_blocks = (
             self.small_reward_blocks + self.small_reward_blocks_consumed
         )
+        # Reset consumables
         self.small_reward_blocks_consumed = []
         return self.agent_pos
 
@@ -86,9 +87,11 @@ class AdaptiveGridWorld:
 
         self.agent_pos = next_pos
 
-        cell_mean = self.reward_means.get(next_pos, self.default_mean)
-        base_reward = cell_mean
-        reward = base_reward + small_reward + boundary_penalty
+        reward = (
+            self.reward_means.get(next_pos, self.default_mean)
+            + small_reward
+            + boundary_penalty
+        )
 
         if next_pos == self.goal:
             return next_pos, reward, True, "completion"
