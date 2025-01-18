@@ -132,6 +132,7 @@ class DynaQAgent(QLearningAgent):
         epsilon_min=0.01,
         epsilon_decay="linear",  # or 'exponential'
         episodes=500,
+        forgetful_bool=True,
         prioritised_sweeping=False,
         priority_threshold=0.1,
         forgetting_threshold=1000,  # Forget transitions older than this many updates
@@ -152,6 +153,7 @@ class DynaQAgent(QLearningAgent):
         self.prioritised_sweeping = prioritised_sweeping
         self.priority_threshold = priority_threshold
         self.forgetting_threshold = forgetting_threshold
+        self.forget = forgetful_bool
 
         # Q-table
         self.q_table = np.zeros((state_size, action_size))
@@ -187,7 +189,8 @@ class DynaQAgent(QLearningAgent):
             self.priority_queue.put((-abs(td_error), state, action))
 
         # Forget outdated transitions
-        self.forget_old_transitions()
+        if self.forget:
+            self.forget_old_transitions()
 
         # Planning phase
         for _ in range(self.planning_steps):
