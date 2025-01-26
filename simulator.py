@@ -1,11 +1,16 @@
-from agents import QLearningAgent, DynaQAgent, DynaQPlusAgent
-from environment import AdaptiveGridWorld
+"""File containing the re-inforcement learning simulation code."""
+
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
-import numpy as np
+
+from agents import DynaQAgent, DynaQPlusAgent, QLearningAgent
+from environment import AdaptiveGridWorld
 
 
 class Simulator:
+    """Simulator class to perform the episodic training of agents."""
+
     def __init__(
         self,
         env: AdaptiveGridWorld,
@@ -14,7 +19,7 @@ class Simulator:
         steps_per_episode=100,
         store_heatmaps: bool = True,
     ):
-        """Initialises the simulator."""
+        """Initialise the simulator."""
         self.env = env
         self.agent = agent
         self.episodes = episodes
@@ -35,15 +40,21 @@ class Simulator:
             []
         )  # list of [ state_size x action_size ] snapshots
 
+        # Metrics to be filled
+        self.policy_change_count = None
+        self.current_state_index = None
+        self.current_total_reward = None
+        self.episode_td_errors = None
+
     def get_q_table(self):
-        """Fetches the Q-table for the current agent."""
+        """Fetch the Q-table for the current agent."""
         if hasattr(self.agent, "q_table"):
             return self.agent.q_table
-        else:
-            raise AttributeError("The agent does not have a Q-table.")
+
+        raise AttributeError("The agent does not have a Q-table.")
 
     def compute_policy_entropy(self):
-        """Computes the average policy entropy for Q-learning across all states."""
+        """Compute the average policy entropy for Q-learning across all states."""
         entropies = []
         for state in range(self.agent.state_size):
             q_values = self.agent.q_table[state]
@@ -58,7 +69,7 @@ class Simulator:
         return np.mean(entropies)
 
     def track_policy_changes(self):
-        """Tracks policy changes and entropy if applicable."""
+        """Track policy changes and entropy if applicable."""
         new_policy = np.argmax(self.agent.q_table, axis=1)
         self.policy_change_count = np.sum(self.agent.previous_policy != new_policy)
         self.policy_changes.append(self.policy_change_count)
@@ -66,12 +77,12 @@ class Simulator:
         self.policy_entropies.append(self.compute_policy_entropy())
 
     def run(self, **kwargs):
-        """Runs the simulation for a given strategy."""
+        """Run the simulation for a given strategy."""
         visited_state_actions = set()  # For state-action coverage
 
         for episode_idx in range(self.episodes):
             self.env.apply_changes(episode_idx)  # Adapt environment
-            self.initialise_episode_statistics(episode_idx)
+            self.initialise_episode_statistics()
 
             completed, death, steps = self.run_episode(kwargs, visited_state_actions)
 
@@ -79,8 +90,8 @@ class Simulator:
 
         return self.total_rewards
 
-    def initialise_episode_statistics(self, episode_idx):
-        """Initialises statistics for a new episode."""
+    def initialise_episode_statistics(self):
+        """Initialise statistics for a new episode."""
         self.env.reset()
         self.current_state_index = 0
         self.current_total_reward = 0
@@ -88,7 +99,7 @@ class Simulator:
         self.policy_change_count = 0
 
     def run_episode(self, kwargs, visited_state_actions):
-        """Runs a single episode."""
+        """Run a single episode."""
         completed, death, steps = False, False, 0
         state_index = self.current_state_index
 
@@ -117,27 +128,27 @@ class Simulator:
         return completed, death, steps
 
     def choose_action(self, state_index, kwargs):
-        """Chooses an action based on the agent's strategy."""
+        """Choose an action based on the agent's strategy."""
         return self.agent.choose_action(state_index, **kwargs)
 
     def get_state_index(self, state):
-        """Calculates the state index from the environment state."""
+        """Calculate the state index from the environment state."""
         return state[0] * self.env.size[1] + state[1]
 
     def track_td_errors(self, td_error):
-        """Tracks TD errors if applicable."""
+        """Track TD errors if applicable."""
         self.episode_td_errors.append(abs(td_error))
 
     def handle_done_status(self, status):
-        """Handles the 'done' status of the episode."""
-        if status == "completion":
+        """Handle the 'done' status of the episode."""
+        if status == "completion":  # pylint: disable=no-else-return
             return True, False
         elif status == "death":
             return False, True
         return False, False
 
     def update_metrics(self, completed, death, steps, visited_state_actions):
-        """Updates metrics after an episode."""
+        """Update metrics after an episode."""
         self.total_rewards.append(self.current_total_reward)
         self.state_action_coverage.append(
             len(visited_state_actions)
@@ -154,7 +165,7 @@ class Simulator:
 
     def plot_policy_at_episode(self, episode):
         """
-        Plots the agent's policy (best actions) at a specific episode.
+        Plot the agent's policy (best actions) at a specific episode.
 
         Args:
             episode (int): The episode index for which to plot the policy.
@@ -192,7 +203,7 @@ class Simulator:
         policy_grid = np.full(grid_size, fill_value=" ", dtype="<U2")
 
         # Map the best action for each state onto the grid
-        for state in range(len(policy)):
+        for state, _ in enumerate(policy):
             row = state // grid_size[1]
             col = state % grid_size[1]
             if np.all(
@@ -265,8 +276,9 @@ class Simulator:
 
     def plot_time_series_per_change(self):
         """
-        Plots time series of death rates and completion rates normalized per change block.
-        Marks environment changes on the plot.
+        Plot time series of death rates and completion rates normalised per change block.
+
+        Mark environment changes on the plot.
         """
         if not hasattr(self.env, "changes") or not self.env.changes:
             print("No environment changes to segment data.")
@@ -315,10 +327,7 @@ class Simulator:
         plt.show()
 
     def plot_death_and_completion_rates_with_changes(self):
-        """
-        Plots death rate and completion rate with markers for environment changes
-        on different y-axes with color-coded axes.
-        """
+        """Plot death rate and completion rate with markers for environment changes."""
         episodes = range(len(self.death_count))
         cumulative_deaths = np.cumsum(self.death_count)
         cumulative_completions = np.cumsum(self.completion_count)
@@ -360,8 +369,7 @@ class Simulator:
         plt.show()
 
     def plot_metrics(self):
-        """Plots all metrics in a single figure with multiple subplots."""
-
+        """Plot all metrics in a single figure with multiple subplots."""
         if hasattr(self.env, "changes") or self.env.changes:
 
             # Identify change points (start, change episodes, end)
@@ -494,11 +502,8 @@ class Simulator:
         else:
             print("No environment changes to segment data.")
 
-    def plot_agent_value_heatmaps(self, filename="q_learning"):
-        """
-        Plots the agent's action-value estimates (could be Q-values or mu-values).
-        If the agent also has 'std' (Thompson), optionally plot a separate figure of std.
-        """
+    def plot_agent_value_heatmaps(self):
+        """Plot the agent's action-value estimates."""
         # -- First, plot the main values (Q or mu) --
         fig, axes = plt.subplots(2, 2, figsize=(10, 9))
         actions = ["↑", "↓", "←", "→"]
@@ -561,7 +566,7 @@ class Simulator:
         plt.show()
 
     def plot_action_frequency_heatmaps(self):
-        """Plots 2x2 heatmaps for action frequencies of each action."""
+        """Plot 2x2 heatmaps for action frequencies of each action."""
         fig, axes = plt.subplots(2, 2, figsize=(10, 9))
 
         actions = ["↑", "↓", "←", "→"]
@@ -624,8 +629,9 @@ class Simulator:
 
     def animate_agent_value_heatmaps(self, interval=5, filename="q_learning"):
         """
-        Creates an animation of the agent's action-value heatmaps over episodes.
-        'interval' is the delay between frames in milliseconds.
+        Create an animation of the agent's action-value heatmaps over episodes.
+
+        Argument 'interval' is the delay between frames in milliseconds.
         """
         actions = ["↑", "↓", "←", "→"]
         grid_size = self.env.size

@@ -1,4 +1,9 @@
+"""File containing the re-inforcement learning environment code."""
+
+
 class AdaptiveGridWorld:
+    """Adaptive grid world environment."""
+
     def __init__(
         self,
         size: tuple[int, int],
@@ -12,7 +17,7 @@ class AdaptiveGridWorld:
         small_reward_value: float = 5.0,
     ):
         """
-        An adaptive GridWorld.
+        Intialise an adaptive GridWorld.
 
         Args:
             size: (rows, cols)
@@ -47,11 +52,12 @@ class AdaptiveGridWorld:
         self.small_reward_blocks = small_reward_blocks
         self.small_reward_blocks_consumed = []
         self.goal = initial_goal
+        self.agent_pos = (0, 0)
         self.start_pos = (0, 0)
         self.reset()
 
     def reset(self):
-        """Resets the environment to the initial state."""
+        """Reset the environment to the initial state."""
         self.agent_pos = self.start_pos
         # Combine small_reward_blocks and small_reward_blocks_consumed
         self.small_reward_blocks = (
@@ -62,7 +68,7 @@ class AdaptiveGridWorld:
         return self.agent_pos
 
     def step(self, action: int) -> tuple[tuple[int, int], float, bool, str]:
-        """Executes an action, returns (next_state, reward, done). Rewards are stochastic."""
+        """Execute an action, return (next_state, reward, done). Rewards are stochastic."""
         moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         move = moves[action]
 
@@ -99,7 +105,7 @@ class AdaptiveGridWorld:
         return next_pos, reward, False, "ongoing"
 
     def apply_changes(self, episode_idx: int):
-        """Applies environment changes based on the episode index."""
+        """Apply environment changes based on the episode index."""
         if episode_idx in self.changes:
             change_dict = self.changes[episode_idx]
 
